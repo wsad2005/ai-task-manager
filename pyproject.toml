@@ -1,0 +1,58 @@
+# ai-task-manager：唯一的配置与依赖清单。
+# Python 基础兼容版本 3.11；开发与 CI 同时在 3.14 上验证。
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-task-manager"
+version = "0.1.0"
+description = "AI 智能任务管理系统：JWT 认证、任务 CRUD/统计、可选 AI 拆解与每日计划"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    # Web 框架与服务
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    # 配置与校验
+    "pydantic>=2.7",
+    "pydantic-settings>=2.4",
+    # 数据库与迁移
+    "sqlalchemy>=2.0",
+    "alembic>=1.13",
+    # 认证
+    "pyjwt>=2.8",
+    "bcrypt>=4.1",
+    # HTTP 客户端（AI 功能与测试）
+    "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.8",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "tests"]
+
+[tool.ruff.lint.per-file-ignores]
+# FastAPI 的 Depends/File/Query 作为默认值是其官方推荐写法
+"app/api/*.py" = ["B008"]

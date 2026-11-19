@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Task Manager</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header id="topbar" class="topbar hidden">
+    <span class="brand">AI Task Manager</span>
+    <span id="current-user" class="muted"></span>
+    <nav class="nav">
+      <button class="nav-btn" data-view="dashboard">仪表盘</button>
+      <button class="nav-btn" data-view="tasks">任务</button>
+      <button class="nav-btn" data-view="ai-breakdown">AI 拆解</button>
+      <button class="nav-btn" data-view="ai-daily">每日计划</button>
+      <button id="logout-btn" class="nav-btn ghost">退出登录</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 登录 / 注册 -->
+    <section id="view-auth" class="view">
+      <div class="auth-card">
+        <h1>AI Task Manager</h1>
+        <p class="muted">登录以管理你的任务</p>
+        <div class="tabs">
+          <button id="tab-login" class="tab active" data-mode="login">登录</button>
+          <button id="tab-register" class="tab" data-mode="register">注册</button>
+        </div>
+        <form id="auth-form" autocomplete="off">
+          <label>用户名
+            <input name="username" required minlength="3" maxlength="32"
+                   pattern="[A-Za-z0-9_-]+" placeholder="3-32 位字母/数字/下划线/连字符">
+          </label>
+          <label>密码
+            <input name="password" type="password" required minlength="8" maxlength="72"
+                   placeholder="至少 8 个字符">
+          </label>
+          <button type="submit" id="auth-submit" class="primary">登录</button>
+          <p id="auth-error" class="form-error hidden"></p>
+        </form>
+      </div>
+    </section>
+
+    <!-- 仪表盘 -->
+    <section id="view-dashboard" class="view hidden">
+      <h2>仪表盘</h2>
+      <div id="stats-cards" class="cards">加载中…</div>
+      <h3>最近 7 天趋势</h3>
+      <div id="trend" class="trend">加载中…</div>
+    </section>
+
+    <!-- 任务列表 -->
+    <section id="view-tasks" class="view hidden">
+      <div class="tasks-head">
+        <h2>任务</h2>
+        <button id="new-task-btn" class="primary">＋ 新建任务</button>
+      </div>
+      <div class="filters">
+        <select id="filter-status">
+          <option value="">全部状态</option>
+          <option value="todo">未完成</option>
+          <option value="done">已完成</option>
+        </select>
+        <select id="filter-priority">
+          <option value="">全部优先级</option>
+          <option value="urgent">紧急</option>
+          <option value="high">高</option>
+          <option value="medium">中</option>
+          <option value="low">低</option>
+        </select>
+        <select id="filter-overdue">
+          <option value="">全部</option>
+          <option value="true">仅逾期</option>
+        </select>
+        <input id="filter-q" placeholder="搜索标题/描述…" maxlength="100">
+        <select id="sort-by">
+          <option value="created_at">按创建时间</option>
+          <option value="due_date">按截止日期</option>
+          <option value="priority">按优先级</option>
+          <option value="title">按标题</option>
+        </select>
+        <select id="order">
+          <option value="desc">降序</option>
+          <option value="asc">升序</option>
+        </select>
+        <button id="reset-filters" class="ghost">重置</button>
+      </div>
+      <div id="task-list" class="task-list">加载中…</div>
+      <div class="pagination">
+        <button id="prev-page" class="ghost">← 上一页</button>
+        <span id="page-info" class="muted"></span>
+        <button id="next-page" class="ghost">下一页 →</button>
+      </div>
+    </section>
+
+    <!-- AI 任务拆解 -->
+    <section id="view-ai-breakdown" class="view hidden">
+      <h2>AI 任务拆解</h2>
+      <p class="muted">输入一个目标，AI 拆解为可执行的子任务。生成的是预览，可修改，确认后才会保存。</p>
+      <textarea id="ai-goal" rows="3" maxlength="1000"
+                placeholder="例如：准备一个月后的 Python 后端开发实习面试"></textarea>
+      <div class="ai-actions">
+        <button id="ai-breakdown-btn" class="primary">生成拆解预览</button>
+      </div>
+      <p id="ai-breakdown-error" class="form-error hidden"></p>
+      <div id="ai-breakdown-preview"></div>
+      <div class="ai-actions">
+        <button id="ai-confirm-btn" class="primary hidden">确认保存为任务</button>
+      </div>
+    </section>
+
+    <!-- AI 每日计划 -->
+    <section id="view-ai-daily" class="view hidden">
+      <h2>AI 每日计划</h2>
+      <p class="muted">基于你真实的未完成任务生成今日安排（优先逾期与临近截止的任务）。</p>
+      <div class="ai-actions">
+        <button id="ai-daily-btn" class="primary">生成今日计划</button>
+      </div>
+      <p id="ai-daily-error" class="form-error hidden"></p>
+      <div id="ai-daily-result"></div>
+    </section>
+  </main>
+
+  <!-- 任务创建/编辑对话框 -->
+  <dialog id="task-dialog">
+    <form id="task-form" method="dialog">
+      <h3 id="task-dialog-title">新建任务</h3>
+      <label>标题 *
+        <input name="title" required maxlength="200" placeholder="任务标题">
+      </label>
+      <label>描述
+        <textarea name="description" rows="3" maxlength="5000"></textarea>
+      </label>
+      <div class="form-row">
+        <label>优先级
+          <select name="priority">
+            <option value="low">低</option>
+            <option value="medium" selected>中</option>
+            <option value="high">高</option>
+            <option value="urgent">紧急</option>
+          </select>
+        </label>
+        <label>截止日期
+          <input name="due_date" type="date">
+        </label>
+      </div>
+      <label>分类
+        <input name="category" maxlength="64" placeholder="例如：工作 / 学习">
+      </label>
+      <label>标签（逗号分隔，最多 20 个）
+        <input name="tags" placeholder="python, 面试">
+      </label>
+      <p id="task-error" class="form-error hidden"></p>
+      <div class="dialog-actions">
+        <button type="button" id="task-cancel" class="ghost">取消</button>
+        <button type="submit" id="task-save" class="primary">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

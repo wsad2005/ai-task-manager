@@ -1,0 +1,24 @@
+# 构建镜像时排除：虚拟环境、Git、缓存、运行时数据、测试与文档
+.venv/
+.venv311/
+venv/
+.git/
+.github/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+data/
+docs/
+samples/
+scripts/
+tests/
+*.log
+.env
+.env.*
+!.env.example
+Dockerfile
+docker-compose.yml
